@@ -1,0 +1,161 @@
+<!-- src/views/dashboard/admin.ejs -->
+<%- include('../partials/header', { title: 'Dashboard Admin' }) %>
+
+<div id="loading" class="center-align">
+    <div class="preloader-wrapper small active">
+        <div class="spinner-layer spinner-blue-only">
+            <div class="circle-clipper left"><div class="circle"></div></div>
+        </div>
+    </div>
+</div>
+
+<div id="dashboard-content" style="display: none;">
+    <div class="row">
+        <div class="col s12">
+            <div class="card blue darken-1 white-text">
+                <div class="card-content">
+                    <span class="card-title"><i class="material-icons">admin_panel_settings</i> Panel de Administración</span>
+                    <p>Bienvenido, <span id="admin-name"></span>! Tienes control total del sistema.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col s12">
+            <div class="card">
+                <div class="card-content">
+                    <span class="card-title">Lista de Usuarios Registrados</span>
+                    <table class="striped responsive-table">
+                        <thead>
+                            <tr>
+                                <th>Nombre</th>
+                                <th>Email</th>
+                                <th>Teléfono</th>
+                                <th>Roles</th>
+                                <th>Fecha Registro</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="users-table-body"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para ver usuario -->
+<div id="user-modal" class="modal">
+    <div class="modal-content">
+        <h4>Detalles del Usuario</h4>
+        <div id="modal-user-content"></div>
+    </div>
+    <div class="modal-footer">
+        <a href="#!" class="modal-close waves-effect waves-green btn-flat">Cerrar</a>
+    </div>
+</div>
+
+<script>
+    const token = sessionStorage.getItem('token');
+    if (!token) window.location.href = '/signin';
+    
+    let currentUserRoles = [];
+    
+    async function checkAdminAccess() {
+        try {
+            const response = await fetch('/api/users/me', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const user = await response.json();
+            currentUserRoles = user.roles;
+            
+            if (!user.roles.includes('admin')) {
+                window.location.href = '/403';
+                return false;
+            }
+            
+            document.getElementById('admin-name').textContent = user.name || user.email;
+            return true;
+        } catch (error) {
+            window.location.href = '/signin';
+            return false;
+        }
+    }
+    
+    async function loadUsers() {
+        try {
+            const response = await fetch('/api/users', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            
+            if (response.status === 403) {
+                window.location.href = '/403';
+                return;
+            }
+            
+            const users = await response.json();
+            const tbody = document.getElementById('users-table-body');
+            tbody.innerHTML = '';
+            
+            users.forEach(user => {
+                const row = tbody.insertRow();
+                row.insertCell(0).textContent = `${user.name || ''} ${user.lastName || ''}`.trim() || 'N/A';
+                row.insertCell(1).textContent = user.email;
+                row.insertCell(2).textContent = user.phoneNumber || 'N/A';
+                row.insertCell(3).textContent = user.roles.join(', ');
+                row.insertCell(4).textContent = user.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'N/A';
+                
+                const actionsCell = row.insertCell(5);
+                const viewBtn = document.createElement('a');
+                viewBtn.href = '#';
+                viewBtn.className = 'btn-small blue';
+                viewBtn.innerHTML = '<i class="material-icons tiny">visibility</i> Ver';
+                viewBtn.onclick = () => showUserDetails(user);
+                actionsCell.appendChild(viewBtn);
+            });
+            
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('dashboard-content').style.display = 'block';
+        } catch (error) {
+            console.error('Error loading users:', error);
+        }
+    }
+    
+    function showUserDetails(user) {
+        const modalContent = document.getElementById('modal-user-content');
+        modalContent.innerHTML = `
+            <table class="striped">
+                <tr><th>Nombre:</th><td>${user.name || 'N/A'}</td></tr>
+                <tr><th>Apellido:</th><td>${user.lastName || 'N/A'}</td></tr>
+                <tr><th>Email:</th><td>${user.email}</td></tr>
+                <tr><th>Teléfono:</th><td>${user.phoneNumber || 'N/A'}</td></tr>
+                <tr><th>Fecha Nacimiento:</th><td>${user.birthdate ? new Date(user.birthdate).toLocaleDateString() : 'N/A'}</td></tr>
+                <tr><th>Dirección:</th><td>${user.address || 'N/A'}</td></tr>
+                <tr><th>Roles:</th><td>${user.roles.join(', ')}</td></tr>
+                <tr><th>Fecha Registro:</th><td>${user.createdAt ? new Date(user.createdAt).toLocaleString() : 'N/A'}</td></tr>
+            </table>
+        `;
+        const modal = M.Modal.init(document.getElementById('user-modal'));
+        modal.open();
+    }
+    
+    async function init() {
+        const isAdmin = await checkAdminAccess();
+        if (isAdmin) {
+            await loadUsers();
+        }
+    }
+    
+    document.addEventListener('DOMContentLoaded', () => {
+        M.Modal.init(document.getElementById('user-modal'));
+        init();
+    });
+    
+    function logout() {
+        sessionStorage.removeItem('token');
+        window.location.href = '/signin';
+    }
+</script>
+
+<%- include('../partials/footer') %>

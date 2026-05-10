@@ -1,0 +1,156 @@
+<!-- src/views/profile.ejs -->
+<%- include('partials/header', { title: 'Mi Perfil' }) %>
+
+<div class="row">
+    <div class="col s12 m8 offset-m2">
+        <div class="card">
+            <div class="card-content">
+                <span class="card-title center-align">Mi Perfil</span>
+                
+                <div id="loading" class="center-align">
+                    <div class="preloader-wrapper small active">
+                        <div class="spinner-layer spinner-blue-only">
+                            <div class="circle-clipper left"><div class="circle"></div></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="profile-content" style="display: none;">
+                    <form id="profile-form">
+                        <div class="row">
+                            <div class="col s12 m6">
+                                <div class="input-field">
+                                    <i class="material-icons prefix">person</i>
+                                    <input type="text" id="name" name="name">
+                                    <label for="name">Nombre</label>
+                                </div>
+                            </div>
+                            <div class="col s12 m6">
+                                <div class="input-field">
+                                    <i class="material-icons prefix">badge</i>
+                                    <input type="text" id="lastName" name="lastName">
+                                    <label for="lastName">Apellido</label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col s12 m6">
+                                <div class="input-field">
+                                    <i class="material-icons prefix">phone</i>
+                                    <input type="tel" id="phoneNumber" name="phoneNumber">
+                                    <label for="phoneNumber">Teléfono</label>
+                                </div>
+                            </div>
+                            <div class="col s12 m6">
+                                <div class="input-field">
+                                    <i class="material-icons prefix">cake</i>
+                                    <input type="text" id="birthdate" disabled>
+                                    <label for="birthdate">Fecha de Nacimiento</label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="input-field">
+                            <i class="material-icons prefix">email</i>
+                            <input type="email" id="email" disabled>
+                            <label for="email">Email</label>
+                        </div>
+                        
+                        <div class="input-field">
+                            <i class="material-icons prefix">link</i>
+                            <input type="url" id="url_profile" name="url_profile">
+                            <label for="url_profile">URL de Perfil</label>
+                        </div>
+                        
+                        <div class="input-field">
+                            <i class="material-icons prefix">location_on</i>
+                            <input type="text" id="address" name="address">
+                            <label for="address">Dirección</label>
+                        </div>
+                        
+                        <div class="chip" id="roles-chip"></div>
+                        
+                        <div class="center-align">
+                            <button class="btn waves-effect waves-light blue darken-2" type="submit">
+                                Actualizar Perfil
+                                <i class="material-icons right">save</i>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const token = sessionStorage.getItem('token');
+    if (!token) window.location.href = '/signin';
+    
+    let userData = {};
+    
+    async function loadProfile() {
+        try {
+            const response = await fetch('/api/users/me', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            
+            if (response.status === 401) {
+                sessionStorage.removeItem('token');
+                window.location.href = '/signin';
+                return;
+            }
+            
+            userData = await response.json();
+            
+            document.getElementById('name').value = userData.name || '';
+            document.getElementById('lastName').value = userData.lastName || '';
+            document.getElementById('phoneNumber').value = userData.phoneNumber || '';
+            document.getElementById('birthdate').value = userData.birthdate ? new Date(userData.birthdate).toLocaleDateString() : '';
+            document.getElementById('email').value = userData.email || '';
+            document.getElementById('url_profile').value = userData.url_profile || '';
+            document.getElementById('address').value = userData.address || '';
+            document.getElementById('roles-chip').innerHTML = `Roles: ${userData.roles.join(', ')}`;
+            
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('profile-content').style.display = 'block';
+        } catch (error) {
+            console.error('Error loading profile:', error);
+        }
+    }
+    
+    document.getElementById('profile-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const updatedData = {
+            name: document.getElementById('name').value,
+            lastName: document.getElementById('lastName').value,
+            phoneNumber: document.getElementById('phoneNumber').value,
+            url_profile: document.getElementById('url_profile').value,
+            address: document.getElementById('address').value
+        };
+        
+        try {
+            const response = await fetch('/api/users/me', {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify(updatedData)
+            });
+            
+            if (response.ok) {
+                M.toast({ html: 'Perfil actualizado correctamente', classes: 'green' });
+                loadProfile();
+            }
+        } catch (error) {
+            M.toast({ html: 'Error al actualizar', classes: 'red' });
+        }
+    });
+    
+    loadProfile();
+</script>
+
+<%- include('partials/footer') %>

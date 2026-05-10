@@ -1,0 +1,26 @@
+<!-- src/views/403.ejs -->
+<%- include('partials/header', { title: 'Acceso Denegado' }) %>
+
+<div class="row">
+    <div class="col s12 m6 offset-m3">
+        <div class="card red lighten-4">
+            <div class="card-content center-align">
+                <i class="material-icons large red-text">block</i>
+                <h3>403 - Acceso Denegado</h3>
+                <p>No tienes permisos suficientes para acceder a esta página.</p>
+                <br>
+                <a href="/dashboard/user" class="btn blue darken-2">Volver al Dashboard</a>
+                <a href="#" onclick="logout()" class="btn red">Cerrar Sesión</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function logout() {
+        sessionStorage.removeItem('token');
+        window.location.href = '/signin';
+    }
+</script>
+
+<%- include('partials/footer') %>

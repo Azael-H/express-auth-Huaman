@@ -1,0 +1,53 @@
+<!-- src/views/partials/header.ejs -->
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    <!-- Materialize CSS -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css" rel="stylesheet">
+    <!-- Material Icons -->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <style>
+        body {
+            display: flex;
+            min-height: 100vh;
+            flex-direction: column;
+        }
+        main {
+            flex: 1 0 auto;
+            padding: 20px;
+        }
+        .navbar-fixed {
+            margin-bottom: 20px;
+        }
+        .error-message {
+            color: #f44336;
+            font-size: 12px;
+            margin-top: 5px;
+        }
+        .success-message {
+            color: #4caf50;
+        }
+        .container {
+            max-width: 1200px;
+        }
+        .logout-btn {
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="navbar-fixed">
+        <nav>
+            <div class="nav-wrapper blue darken-2">
+                <a href="#" class="brand-logo center" id="logo-link">AuthApp</a>
+                <ul id="nav-mobile" class="right hide-on-med-and-down">
+                    <!-- El menú se llenará con JS -->
+                </ul>
+            </div>
+        </nav>
+    </div>
+    <main>
+        <div class="container">
